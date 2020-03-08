@@ -9,6 +9,7 @@ verify_ssl = true
 flask = "*"
 line-bot-sdk = "*"
 googletrans = "*"
+flask-sqlalchemy = "*"
 
 [requires]
 python_version = "3.8"
