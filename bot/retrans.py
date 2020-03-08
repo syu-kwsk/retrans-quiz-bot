@@ -1,4 +1,4 @@
-from googletrans import Translator
+from googletrans import Translator, LANGUAGES
 from random import randint
 
 class Retrans(Translator):
@@ -25,9 +25,14 @@ class Retrans(Translator):
         return detected_lang
 
     def retrans(self):
+        result = {}
+        result["text"] = self.text
+        result["level"] = self.level
+        trans_rec = []
         for lang in self.get_trans_list():
             self.text = self.translate(self.text, dest=lang).text
-            print(lang, self.text)
+            trans_rec.append({LANGUAGES[lang] : self.text})
 
-        return self.translate(self.text, dest='ja').text
-
+        result["trans_rec"] = trans_rec
+        result["retrans"] = self.translate(self.text, dest='ja').text
+        return result
