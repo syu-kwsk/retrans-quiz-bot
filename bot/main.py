@@ -1,5 +1,6 @@
 from flask import Flask, request, abort
 from bot import app
+from bot.retrans import Retrans
 from linebot import (
         LineBotApi, WebhookHandler
         )
@@ -10,7 +11,6 @@ from linebot.models import (
         MessageEvent, TextMessage, TextSendMessage
         )
 import os
-from googletrans import Translator
 
 #環境変数取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
@@ -38,8 +38,10 @@ def callback():
 
 @handler.add(MessageEvent)
 def handle_message(event):
-    translator = Translator()
-    message = translator.translate(event.message.text, dest='en').text
+    message = Retrans(text=event.message.text)
+    message.set_level(10)
+    message = message.retrans()
+    message = message["retrans"]
     line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=message)
