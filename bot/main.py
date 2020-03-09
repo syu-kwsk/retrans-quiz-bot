@@ -1,6 +1,7 @@
 from flask import Flask, request, abort
 from bot import app, db
 from bot.retrans import Retrans
+from bot.models import Quiz
 from linebot import (
         LineBotApi, WebhookHandler
         )
@@ -11,6 +12,7 @@ from linebot.models import (
         MessageEvent, TextMessage, TextSendMessage
         )
 import os
+from random import randint
 
 #環境変数取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
@@ -38,13 +40,19 @@ def callback():
 
 @handler.add(MessageEvent)
 def handle_message(event):
-    message = Retrans(text=event.message.text)
-    message.set_level(10)
-    message = message.retrans()
-    message = message["retrans"]
+    messages = []
+    quiz = Quiz.query.filter_by(id=randint(1, 1000)).first()
+    trans_question = Retrans(text=quiz.question)
+    trans_question.set_level(5)
+    trans_question = trans_question.retrans()
+    answer = quiz.answer
+    true_question = quiz.question
+    messages.append(TextSendMessage(text=trans_question["retrans"]))
+    messages.append(TextSendMessage(text="答えは:"+answer))
+    messages.append(TextSendMessage(text="以下、原文:\n"+true_question))
     line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=message)
+            messages
             )
 
 if __name__ == "__main__":
