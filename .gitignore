@@ -1,0 +1,5 @@
+*.env
+*.db
+*.lock
+*.json
+data.py
