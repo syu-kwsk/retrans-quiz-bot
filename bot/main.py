@@ -42,15 +42,35 @@ def callback():
 @handler.add(MessageEvent)
 def handle_message(event):
     messages = []
-    quiz = Quiz.query.filter_by(id=randint(1, 1000)).first()
-    trans_question = Retrans(text=quiz.question)
-    trans_question.set_level(5)
-    trans_question = trans_question.retrans()
-    answer = quiz.answer
-    true_question = quiz.question
-    messages.append(TextSendMessage(text=trans_question["retrans"]))
-    messages.append(TextSendMessage(text="答えは:"+answer))
-    messages.append(TextSendMessage(text="以下、原文:\n"+true_question))
+    user = User.query.filter_by(user_id=event.source.user_id).first()
+
+    if user.status == "normal":
+        if event.message.text == "クイズ":
+            quiz = Quiz.query.filter_by(id=randint(1, 1000)).first()
+            user.status = quiz.question
+            db.session.add(user)
+            db.session.commit()
+            trans_question = Retrans(text=quiz.question)
+            trans_question.set_level(2)
+            quiz = trans_question.retrans()["retrans"]
+            messages.append(TextSendMessage(text=quiz))
+
+        else:
+            messages.append(TextSendMessage(text="「クイズ」でランダムに選んだクイズを再翻訳して出題します。"))
+    else:
+        quiz = Quiz.query.filter_by(question=user.status).first()
+        message = "………"
+        if quiz.answer == event.message.text:
+            message+="正解！\nすごいね"
+        else:
+            message+="残念！\n正解は「"+quiz.answer+"」"
+        
+        messages.append(TextSendMessage(text=message))
+        messages.append(TextSendMessage(text="以下、原文:\n"+quiz.question))
+        user.status = "normal"
+        db.session.add(user)
+        db.session.commit()
+
     line_bot_api.reply_message(
             event.reply_token,
             messages
