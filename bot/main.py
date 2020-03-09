@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from bot import app, db
 from bot.retrans import Retrans
-from bot.models import Quiz
+from bot.models import Quiz, User
 from linebot import (
         LineBotApi, WebhookHandler
         )
@@ -9,7 +9,8 @@ from linebot.exceptions import (
         InvalidSignatureError
         )
 from linebot.models import (
-        MessageEvent, TextMessage, TextSendMessage
+        MessageEvent, TextMessage, TextSendMessage,
+        FollowEvent
         )
 import os
 from random import randint
@@ -50,6 +51,28 @@ def handle_message(event):
     messages.append(TextSendMessage(text=trans_question["retrans"]))
     messages.append(TextSendMessage(text="答えは:"+answer))
     messages.append(TextSendMessage(text="以下、原文:\n"+true_question))
+    line_bot_api.reply_message(
+            event.reply_token,
+            messages
+            )
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    user_id = event.source.user_id
+    user = User.query.filter_by(user_id=user_id).first()
+
+    if user is None:
+        user = User(user_id=user_id, status="normal")
+        db.session.add(user)
+        db.session.commit()
+
+    else :
+        user.status = "normal"
+        db.session.add(user)
+
+    messages = []
+    messages.append(TextSendMessage(text="こんにちは、"+line_bot_api.get_profile(user_id).display_name+"さん"))
+    messages.append(TextSendMessage(text="「クイズ」でランダムに選んだクイズを再翻訳して出題します。"))
     line_bot_api.reply_message(
             event.reply_token,
             messages
