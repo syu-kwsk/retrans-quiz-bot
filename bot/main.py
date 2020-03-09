@@ -43,7 +43,7 @@ def callback():
 def handle_message(event):
     messages = []
     user = User.query.filter_by(user_id=event.source.user_id).first()
-    print(line_bot_api.get_profile(status.user_id).display_name)
+    print(line_bot_api.get_profile(user.user_id).display_name)
     if user.status == "normal":
         if event.message.text == "クイズ":
             quiz = Quiz.query.filter_by(id=randint(1, 1000)).first()
